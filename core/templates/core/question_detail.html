@@ -1,0 +1,51 @@
+{% extends "core/base.html" %} 
+
+{% block content %} 
+
+<h2>Soru Detayı: {{ question.title }}</h2>
+
+<div style="margin: 50;">
+    <p>
+        <strong>Gönderen:</strong> {{ question.author.username }}
+        <br>
+        <strong>Derslik:</strong> {{ question.offering|default:"Ders Dışı" }}
+        <br>
+        <strong>Önem:</strong> {{ question.get_priority_display|default:question.priority }}
+    </p>
+
+    <div>
+        <strong>Soru Başlığı:</strong>
+        <p style="border:1px solid #ccc; padding: 10px;">
+            {{ question.title }}
+        </p>
+
+        <strong>Soru İçeriği:</strong>
+        <p style="border:1px solid #ccc; padding: 10px;">
+            {{ question.content }}
+        </p>
+    </div>
+
+    <hr> 
+    
+    <h3>Soruyu Yönlendir</h3>
+    <form method="POST">
+        {% csrf_token %} {{ forward_form.as_p }}
+        <button type="submit">Bu Hocaya Yönlendir (Forward)</button>
+    </form>
+
+    <hr> <h3>Soru Durumu</h3>
+    {% if question.old_handler %}
+        <p style="background-color: #eee; padding: 10px;">
+            Bu soru, 
+            <strong>{{ question.old_handler.username }}</strong> 
+            tarafından size yönlendirildi.
+        </p>
+    {% else %}
+        <p>Bu soru size ilk defa atanmış (veya admin tarafından atanmış).</p>
+    {% endif %}
+
+    <br>
+    <a href="{% url 'core:teacher_dashboard' %}">Listeye Geri Dön</a>
+</div>
+
+{% endblock %}

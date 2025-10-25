@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+
+    <h2>Öğretmen Paneli</h2>
+    <h3>Size Atanan Sorular</h3>
+
+    <hr> {% for question in questions %}
+
+        <div>
+            <h4>
+                <a href="{% url 'core:question_detail' question.pk %}">
+                    {{ question.title }}
+                </a>
+            </h4> 
+
+            <p>
+                <strong>Gönderen:</strong> {{ question.author.username }}
+                <br>
+                <strong>Önem Sırası:</strong> {{ question.priority }}
+                <br>
+                <strong>Tarih:</strong> {{ question.created_at }}
+            </p>
+        </div>
+        <hr> {% empty %}
+        <p>Size atanmış aktif bir soru bulunmamaktadır.</p>
+
+    {% endfor %} <br>
+    <a href="{% url 'core:home' %}">Anasayfaya Dön</a>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "core/base.html" %} 
+{% block content %}
+
+    <h2>Giriş Yap</h2>
+
+    {% if form.errors %}
+        <p style="color: red;">Kullanıcı adı veya şifre hatalı!</p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %} {{ form.as_p }} <button type="submit">Giriş Yap</button>
+    </form>
+
+{% endblock %}
