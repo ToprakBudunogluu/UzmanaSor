@@ -34,7 +34,7 @@ class QuestionBinderTest(models.Model):
     question_author= models.ForeignKey(settings.AUTH_USER_MODEL , related_name= 'Sorunun_Sahibi', verbose_name='Sorunun Sahibi', on_delete=models.CASCADE)
     question_current_handler= models.ForeignKey(settings.AUTH_USER_MODEL , verbose_name='Sorunun Su Anki Sorumlusu', on_delete=models.CASCADE)
     question_old_handler= models.ForeignKey(settings.AUTH_USER_MODEL , related_name= 'Sorunun_Eski_Sorumlusu' , verbose_name='Sorunun Eski Sorumlusu', null=True, blank=True, on_delete=models.SET_NULL)
-    question_priority = models.IntegerField( max_length=10 , verbose_name='Onem Sirasi' , editable=False)
+    question_priority = models.IntegerField(verbose_name='Onem Sirasi' , editable=False)
     class_term = models.ForeignKey(ClassTermTest , verbose_name="Bolum ve Donem" , on_delete=models.CASCADE)
     course = models.ForeignKey(CourseTest , verbose_name="Ana Ders", on_delete=models.CASCADE)
 

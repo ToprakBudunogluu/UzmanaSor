@@ -110,8 +110,7 @@ def question_detail(request, pk):
         return redirect('core:home')
 
     # Bu soruya daha önce yazılmış CEVAPLARI al
-    answers = question.answers.all()
-    # .order_by('-created_at')
+    answers = question.answers.all().order_by('-created_at')
 
     # İki formu da 'None' olarak başlat
     forward_form = None
@@ -132,8 +131,8 @@ def question_detail(request, pk):
                 if forward_form.is_valid():
                     new_handler = forward_form.cleaned_data['recipient']
 
-                    question.old_handler = question.current_handler 
-                    question.current_handler = new_handler          
+                    question.question_old_handler = question.question_current_handler 
+                    question.question_current_handler = new_handler          
                     question.save() 
 
                     return redirect('core:teacher_dashboard')
