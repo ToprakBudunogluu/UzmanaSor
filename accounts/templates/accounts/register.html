@@ -1,10 +1,26 @@
-{% extends "core/base.html" %} 
-{% block content %}
+{% extends "core/base.html" %}
 
+{% block content %}
     <h2>Öğrenci Kaydı Oluştur</h2>
 
     <form method="POST">
-        {% csrf_token %} {{ form.as_p }} <button type="submit">Kayıt Ol</button>
-    </form>
+        {% csrf_token %}
 
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="mb-3"> {{ field.label_tag }} {{ field }} {% if field.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ field.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+    </form>
 {% endblock %}

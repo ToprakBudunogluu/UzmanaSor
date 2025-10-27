@@ -6,11 +6,11 @@
 
 <div style="margin: 50;">
     <p>
-        <strong>Gönderen:</strong> {{ question.author.username }}
+        <strong>Gönderen:</strong> {{ question.question_author.username }}
         <br>
         <strong>Derslik:</strong> {{ question.offering|default:"Ders Dışı" }}
         <br>
-        <strong>Önem:</strong> {{ question.get_priority_display|default:question.priority }}
+        <strong>Önem:</strong> {{ question.get_priority_display|default:question.question_priority }}
     </p>
 
     <div>
@@ -27,25 +27,74 @@
 
     <hr> 
     
-    <h3>Soruyu Yönlendir</h3>
-    <form method="POST">
-        {% csrf_token %} {{ forward_form.as_p }}
-        <button type="submit">Bu Hocaya Yönlendir (Forward)</button>
-    </form>
+<h3>Mevcut Cevaplar</h3>
+    {% for answer in answers %}
+        <div class="card bg-light mb-3">
+            <div class="card-header">
+                <strong>{{ answer.author.username }}</strong> 
+                ({{ answer.author.get_academic_rank_display|default:"Öğrenci" }})
+                - <small>{{ answer.created_at|date:"d M Y, H:i" }}</small>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ answer.content|linebreaks }}</p>
+            </div>
+        </div>
+    {% empty %}
+        <p>Bu soruya henüz cevap yazılmamış.</p>
+    {% endfor %}
 
-    <hr> <h3>Soru Durumu</h3>
-    {% if question.old_handler %}
-        <p style="background-color: #eee; padding: 10px;">
-            Bu soru, 
-            <strong>{{ question.old_handler.username }}</strong> 
-            tarafından size yönlendirildi.
-        </p>
-    {% else %}
-        <p>Bu soru size ilk defa atanmış (veya admin tarafından atanmış).</p>
+    <hr>
+
+    {% if user.user_type == 'teacher' %}
+
+        <h3>Soruya Cevap Yaz</h3>
+        <form method="POST">
+            {% csrf_token %}
+            {{ answer_form.as_p }}
+
+            <button type="submit" name="answer_submit" class="btn btn-primary">
+                Cevabı Gönder
+            </button>
+        </form>
+
+        <hr>
+
+        <h3>Soruyu Yönlendir</h3>
+        <form method="POST">
+            {% csrf_token %}
+            {{ forward_form.as_p }}
+
+            <button type="submit" name="forward_submit" class="btn btn-secondary">
+                Bu Hocaya Yönlendir (Forward)
+            </button>
+        </form>
+
+        <hr>
+
+        <h3>Soru Durumu</h3>
+        {% if question.old_handler%}
+            <p>
+                Bu soru <strong>{{ question.old_handler.username }}</strong> 
+                tarafından size iletildi.
+            </p>
+        {% else %}
+            <p>
+                Bu soru ilk kez size atandı.
+            </p>
+        {% endif %}
+
     {% endif %}
 
     <br>
-    <a href="{% url 'core:teacher_dashboard' %}">Listeye Geri Dön</a>
-</div>
+
+    {% if user.user_type == 'teacher' %}
+        <a href="{% url 'core:teacher_dashboard' %}" class="btn btn-outline-dark">
+            Listeye Geri Dön
+        </a>
+    {% else %}
+        <a href="{% url 'core:student_dashboard' %}" class="btn btn btn-outline-dark">
+            Listeye Geri Dön
+        </a>
+    {% endif %}
 
 {% endblock %}

@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .forms import QuestionForm, ForwardForm
-from .models import Question
+from .forms import QuestionForm, ForwardForm, AnswerForm
+from .models import QuestionBinderTest, Answer
+
 
 def home(request):
     # Bu fonksiyon şimdilik sadece bir HTML sayfasını 'render' edecek
@@ -11,34 +12,60 @@ def home(request):
     return render(request, 'core/home.html')
 
 
-@login_required
+@login_required 
 def student_dashboard(request):
+
+    if request.user.user_type not in ('student', 'r_student'):
+        # O zaman bu sayfayı görme izni YOKTUR. Anasayfaya yolla.
+        return redirect('core:home')
+
+    # 1. KENDİ SORULARINI LİSTELEMEK İÇİN SORGULA
+    # 'author'u (soran) 'request.user' (giriş yapan öğrenci)
+    # olan tüm soruları bul. En yeniler üste gelsin.
+    # my_questions = QuestionBinderTest.objects.filter(
+    #     author=request.user
+    # ).order_by('-created_at')
+
+    my_questions_test = QuestionBinderTest.objects.filter(
+        question_author = request.user
+    )
+    # .order_by('-question.created_at')
+
     if request.method == 'POST':
         form = QuestionForm(request.POST)
         if form.is_valid():
-            # commit=False: 
-            # "ObjeYİ OLUŞTUR AMA VERİTABANINA HENÜZ KAYDETME!"
-            # Çünkü 'author' (soran) alanını eklememiz lazım.
-            question = form.save(commit=False)
+            # 1. 'ModelForm'dan gelen 'title' ve 'content' ile objeyi yarat
+            question = form.save(commit=False) 
 
-            # 'author'u, o an giriş yapmış olan kullanıcı olarak ata
-            question.author = request.user 
+            # 2. 'author'u manuel ata
+            question.question_author = request.user 
+            question.question_current_handler = question.course.course_teacher
+            question.question_priority = 1
+            # question.question.title = form.cleaned_data.get('title_data')
+            # question.question.content = form.cleaned_data.get('content_data')
+            # if assigned_teacher:
+            #     # Eğer öğrenci bir hoca seçtiyse...
+            #     question.current_handler = assigned_teacher
+            # else:
+            #     # Seçmediyse 'current_handler' 'None' (boş) kalır
+            #     # ve soru 'havuza' düşer.
 
-            # Şimdi veritabanına kaydet.
-            # BU NOKTADA bizim 'Question.save()' metodumuz
-            # çalışıp 'priority' ve 'handler'ı da atayacak.
+            #     # 4. Kaydet (Bu, 'Question.save()' metodunu tetikler)
             question.save() 
 
-            # Başarılı. Anasayfaya yönlendir.
-            return redirect('core:home')
+            return redirect('core:student_dashboard')
 
-    # Eğer kullanıcı sayfayı İLK KEZ AÇIYORSA (GET):
+    # 3. YENİ SORU FORMUNU GÖSTER (Bu kısım aynı)
     else:
-        form = QuestionForm() # Boş bir form oluştur
+        form = QuestionForm() 
 
-    # Formu (boş veya hatalı) 'template'e yolla
-    return render(request, 'core/dashboard_student.html', {'form': form})
-
+    # 4. 'CONTEXT'İ GÜNCELLE
+    # 'template'e artık HEM formu HEM DE soru listesini yolla
+    context = {
+        'form': form,
+        'my_questions': my_questions_test
+    }
+    return render(request, 'core/dashboard_student.html', context)
 
 @login_required # 1. Fedai: Önce giriş yapmış olmalı
 def teacher_dashboard(request):
@@ -56,9 +83,10 @@ def teacher_dashboard(request):
     # 'order_by': Onları 'priority' (önem) sırasına göre Z->A (-priority)
     # ve 'created_at' (tarih) sırasına göre en yeni (-created_at)
     # olacak şekilde sırala.
-    my_questions = Question.objects.filter(
-        current_handler_id = request.user.id
-    ).order_by('-priority', '-created_at')
+    my_questions = QuestionBinderTest.objects.filter(
+        question_current_handler_id = request.user.id
+    )
+    # .order_by('-priority', '-created_at')
     
 
 
@@ -75,33 +103,67 @@ def teacher_dashboard(request):
 
 @login_required
 def question_detail(request, pk):
-    # 1. 'pk' ile soruyu bul.
-    question = get_object_or_404(Question, pk=pk)
+    question = get_object_or_404(QuestionBinderTest, pk=pk)
 
-    # 2. Formu işle (Eğer kullanıcı "Forward" butonuna bastıysa - POST)
-    if request.method == 'POST':
-        # TODO: Burası 'Answer' (Cevap) formuyla çakışabilir.
-        # Şimdilik sadece 'Forward' olduğunu varsayalım.
-        form = ForwardForm(request.POST)
-        if form.is_valid():
-            new_handler = form.cleaned_data['recipient']
+    if not (request.user.user_type == 'teacher' or request.user == question.question_author):
+        # O zaman bu sayfayı görme izni YOKTUR. Anasayfaya yolla.
+        return redirect('core:home')
 
-            # --- BASİT YOL LOGIC'İ ---
-            question.old_handler = question.current_handler # Eskiyi 'old'a kaydır
-            question.current_handler = new_handler          # Yeniyi 'current'a ata
-            question.save() # Güncelle
-            # --- LOGIC BİTTİ ---
+    # Bu soruya daha önce yazılmış CEVAPLARI al
+    answers = question.answers.all()
+    # .order_by('-created_at')
 
-            return redirect('core:teacher_dashboard')
+    # İki formu da 'None' olarak başlat
+    forward_form = None
+    answer_form = None
 
-    # 3. Formu göster (Eğer kullanıcı sayfayı ilk açtıysa - GET)
-    else:
-        form = ForwardForm()
+    # Logic: Sadece 'teacher'lar cevaplayabilir ve 'forward' edebilir
+    if request.user.user_type == 'teacher':
 
-    # 4. Veriyi 'template'e yolla
+        # --- POST İSTEĞİNİ İŞLEME (Kullanıcı Butona Bastıysa) ---
+        if request.method == 'POST':
+
+            # Hangi butona basıldığını ayırt etmemiz lazım.
+            # 'name' attribute'ü ile yapacağız.
+
+            # EĞER "FORWARD ET" BUTONUNA BASILDIYSA:
+            if 'forward_submit' in request.POST:
+                forward_form = ForwardForm(request.POST)
+                if forward_form.is_valid():
+                    new_handler = forward_form.cleaned_data['recipient']
+
+                    question.old_handler = question.current_handler 
+                    question.current_handler = new_handler          
+                    question.save() 
+
+                    return redirect('core:teacher_dashboard')
+
+            # EĞER "CEVAPLA" BUTONUNA BASILDIYSA:
+            elif 'answer_submit' in request.POST:
+                answer_form = AnswerForm(request.POST)
+                if answer_form.is_valid():
+                    # commit=False: Henüz kaydetme
+                    answer = answer_form.save(commit=False) 
+
+                    # Cevabın 'author' (yazarı) ve 'question' (sorusu)
+                    # alanlarını manuel ata
+                    answer.author = request.user
+                    answer.question = question
+                    answer.save() # Şimdi kaydet
+
+                    # Başarılı, aynı sayfaya yönlendir (cevap görünsün)
+                    return redirect('core:question_detail', pk=question.pk)
+
+        # --- GET İSTEĞİNİ İŞLEME (Sayfa İlk Açıldıysa) ---
+        # İki formun da boş halini oluştur
+        forward_form = ForwardForm()
+        answer_form = AnswerForm()
+
+    # --- TÜM VERİYİ TEMPLATE'E YOLLA ---
     context = {
         'question': question,
-        'forward_form': form,
-        # 'history' (tarihçe) diye bir şey yollamıyoruz artık
+        'answers': answers, # Cevap listesini de yolla
+        'forward_form': forward_form,
+        'answer_form': answer_form,
     }
     return render(request, 'core/question_detail.html', context)

@@ -1,15 +1,59 @@
 {% extends "core/base.html" %}
-
 {% block content %}
 
-    <h2>Öğrenci Paneli</h2>
-    <h3>Yeni Soru Oluştur</h3>
+<h2>Öğrenci Paneli</h2>
 
-    <form method="POST">
-        {% csrf_token %} {{ form.as_p }} <button type="submit">Soruyu Gönder</button>
-    </form>
+<div class="row">
+    <div class="col-md-7">
+        <h3>Sorduğum Sorular</h3>
 
-    <br>
-    <a href="{% url 'core:home' %}">Anasayfaya Dön</a>
+        {% for question in my_questions %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{% url 'core:question_detail' question.pk %}">
+                            {{ question.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            <strong>Durum:</strong> 
+                            {% if question.question_current_handler %}
+                                {{ question.question_current_handler.username }} 
+                                (inceliyor)
+                            {% else %}
+                                Havuzda (Henüz atama yapılmadı)
+                            {% endif %}
+                            <br>
+                            <strong>Tarih:</strong> 
+                            {{ question.created_at|date:"d M Y" }}
+                        </small>
+                    </p>
+                </div>
+            </div>
+        {% empty %}
+            <p>Daha önce hiç soru sormamışsınız.</p>
+        {% endfor %}
+    </div>
+
+    <div class="col-md-5">
+        <h3>Yeni Soru Oluştur</h3>
+        <form method="POST">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="mb-3">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="invalid-feedback d-block">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary">Soruyu Gönder</button>
+        </form>
+    </div>
+</div>
 
 {% endblock %}
