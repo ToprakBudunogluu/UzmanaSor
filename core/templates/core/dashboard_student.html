@@ -18,11 +18,12 @@
                     <p class="card-text">
                         <small class="text-muted">
                             <strong>Durum:</strong> 
-                            {% if question.question_current_handler %}
-                                {{ question.question_current_handler.username }} 
-                                (inceliyor)
+                            {% if question.answer_count > 0 %}
+                                    <span class="text-success fw-bold">Cevaplandı</span>
+                            {% elif question.question_current_handler %}
+                                    {{ question.question_current_handler.username }} (inceliyor)
                             {% else %}
-                                Havuzda (Henüz atama yapılmadı)
+                                    Havuzda (Henüz atama yapılmadı)
                             {% endif %}
                             <br>
                             <strong>Tarih:</strong> 

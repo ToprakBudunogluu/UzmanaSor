@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import QuestionForm, ForwardForm, AnswerForm
 from .models import QuestionBinderTest, Answer
-
+from django.db.models import Count
 
 def home(request):
     # Bu fonksiyon şimdilik sadece bir HTML sayfasını 'render' edecek
@@ -19,17 +19,11 @@ def student_dashboard(request):
         # O zaman bu sayfayı görme izni YOKTUR. Anasayfaya yolla.
         return redirect('core:home')
 
-    # 1. KENDİ SORULARINI LİSTELEMEK İÇİN SORGULA
-    # 'author'u (soran) 'request.user' (giriş yapan öğrenci)
-    # olan tüm soruları bul. En yeniler üste gelsin.
-    # my_questions = QuestionBinderTest.objects.filter(
-    #     author=request.user
-    # ).order_by('-created_at')
-
     my_questions_test = QuestionBinderTest.objects.filter(
-        question_author = request.user
-    )
-    # .order_by('-question.created_at')
+            question_author = request.user
+        ).annotate(
+            answer_count=Count('answers')
+        ).order_by('-created_at')
 
     if request.method == 'POST':
         form = QuestionForm(request.POST)
@@ -40,17 +34,7 @@ def student_dashboard(request):
             # 2. 'author'u manuel ata
             question.question_author = request.user 
             question.question_current_handler = question.course.course_teacher
-            question.question_priority = 1
-            # question.question.title = form.cleaned_data.get('title_data')
-            # question.question.content = form.cleaned_data.get('content_data')
-            # if assigned_teacher:
-            #     # Eğer öğrenci bir hoca seçtiyse...
-            #     question.current_handler = assigned_teacher
-            # else:
-            #     # Seçmediyse 'current_handler' 'None' (boş) kalır
-            #     # ve soru 'havuza' düşer.
-
-            #     # 4. Kaydet (Bu, 'Question.save()' metodunu tetikler)
+            
             question.save() 
 
             return redirect('core:student_dashboard')
@@ -85,8 +69,7 @@ def teacher_dashboard(request):
     # olacak şekilde sırala.
     my_questions = QuestionBinderTest.objects.filter(
         question_current_handler_id = request.user.id
-    )
-    # .order_by('-priority', '-created_at')
+    ).order_by('-question_priority', '-created_at')
     
 
 

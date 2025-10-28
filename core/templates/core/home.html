@@ -2,33 +2,51 @@
 
 {% block content %}
 
-
-<h1>HocaBilir Platformu</h1>
-
+    <div class="card  border-0" style="background-color: rgba(0, 0, 0, 0);">
         {% if user.is_authenticated %}
 
-            <h3>Hoş geldin, {{ user.username }}!</h3>
-            <p>User Type: {{ user.user_type }}</p>
+            <h3 class="text-center">Hoş geldin, {{ user.username }}!</h3>
 
-            {% if user.user_type == 'student' or user.user_type == 'r_student' %}
-                <a href="{% url 'core:student_dashboard' %}">Öğrenci Paneli (Soru Sor)</a>
-            {% elif user.user_type == 'teacher' %}
-                <a href="{% url 'core:teacher_dashboard' %}">Öğretmen Paneli (Soruları Gör)</a>
-            {% endif %}
-            <br><br>
+            <div class="text-center mt-4">
+                {% if user.user_type == 'student' or user.user_type == 'r_student' %}
+                    <a href="{% url 'core:student_dashboard' %}" class="btn btn-primary btn-lg">
+                        Öğrenci Paneli (Soru Sor)
+                    </a>
+                {% elif user.user_type == 'teacher' %}
+                    <a href="{% url 'core:teacher_dashboard' %}" class="btn btn-success btn-lg">
+                        Öğretmen Paneli (Soruları Gör)
+                    </a>
+                {% endif %}
+            </div>
 
-            <form action="{% url 'accounts:logout' %}" method="POST" style="display: inline;">
-                {% csrf_token %} <button type="submit">Çıkış Yap (Logout)</button>
-            </form>
+            <hr class="my-4">
+
+            <div class="text-center">
+                <form action="{% url 'accounts:logout' %}" method="POST" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Çıkış Yap (Logout)</button>
+                </form>
+            </div>
 
         {% else %}
 
-            <h3>Lütfen giriş yapın veya kayıt olun.</h3>
+            <div class="row justify-content-center" style="background-color: rgba(0, 0, 0, 0); margin-top: 15%;">
 
-            <a href="{% url 'accounts:login' %}" class="btn btn-primary">Giriş Yap</a>
-            <br>
-            <a href="{% url 'accounts:register_student' %}" class="btn btn-danger">Öğrenci Kaydı</a>
+                <div class="col-md-7 my-5">
+                    <div class="card shadow-sm border-0"style="background-color: rgba(255, 255, 255, 0.5);">
+                        <div class="card-body p-5">
+                            <h1 class="card-title text-center mb-4">Uzmana Sor</h1>
+                            <h3 class="text-center text-muted">Lütfen giriş yapın veya kayıt olun.</h3>
 
+                                <div class="text-center mt-4">
+                                    <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg mx-1"> Giriş Yap </a>
+                                    <a href="{% url 'accounts:register_student' %}" class="btn btn-secondary btn-lg mx-1">Öğrenci Kaydı </a>
+                                </div>
+                        </div>  
+                    </div> 
+                </div> 
+            </div>  
         {% endif %}
-
-{% endblock %}
+    </div> 
+    
+    {% endblock %}

@@ -72,9 +72,9 @@
         <hr>
 
         <h3>Soru Durumu</h3>
-        {% if question.old_handler%}
+        {% if question.question_old_handler%}
             <p>
-                Bu soru <strong>{{ question.old_handler.username }}</strong> 
+                Bu soru <strong>{{ question.question_old_handler.username }}</strong> 
                 tarafından size iletildi.
             </p>
         {% else %}
