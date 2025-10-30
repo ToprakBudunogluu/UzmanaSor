@@ -41,7 +41,8 @@ class ForwardForm(forms.Form):
         # queryset: Bu 'dropdown'ın seçenekleri NELER OLSUN?
         # CustomUser tablosundaki user_type'ı 'teacher' olan HERKES.
         queryset=CustomUser.objects.filter(user_type='teacher'),
-        label="Yönlendirilecek Hoca"
+        label="Yönlendirilecek Hoca",
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
 
 class AnswerForm(forms.ModelForm):

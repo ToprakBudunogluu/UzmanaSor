@@ -1,100 +1,147 @@
-{% extends "core/base.html" %} 
+{% extends "core/base.html" %}
 
-{% block content %} 
+{% block content %}
 
-<h2>Soru Detayı: {{ question.title }}</h2>
-
-<div style="margin: 50;">
-    <p>
-        <strong>Gönderen:</strong> {{ question.question_author.username }}
-        <br>
-        <strong>Derslik:</strong> {{ question.offering|default:"Ders Dışı" }}
-        <br>
-        <strong>Önem:</strong> {{ question.get_priority_display|default:question.question_priority }}
-    </p>
-
-    <div>
-        <strong>Soru Başlığı:</strong>
-        <p style="border:1px solid #ccc; padding: 10px;">
-            {{ question.title }}
-        </p>
-
-        <strong>Soru İçeriği:</strong>
-        <p style="border:1px solid #ccc; padding: 10px;">
-            {{ question.content }}
-        </p>
-    </div>
-
-    <hr> 
-    
-<h3>Mevcut Cevaplar</h3>
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">{{ question.title }}</h4>
+                <small class="text-muted">
+                    Gönderen: {{ question.question_author.username }} 
+                    ({{ question.created_at|date:"d M Y, H:i" }})
+                </small>
+            </div>
+            <span class="badge bg-danger rounded-pill fs-6">
+                Önem: {{ question.question_priority }}
+            </span>
+        </div>
+        <div class="card-body">
+            <p class="card-text fs-5 mb-3">
+                {{ question.content|linebreaks }}
+            </p>
+            <hr>
+            <p class="card-text text-muted small">
+                <strong>Derslik:</strong> {{ question.class_term.class_name|default:"Belirtilmemiş" }}
+                <br>
+                <strong>Ders:</strong> {{ question.course.title|default:"Belirtilmemiş" }}
+            </p>
+        </div>
+    </div> <h3 class="mb-3">Mevcut Cevaplar</h3>
     {% for answer in answers %}
-        <div class="card bg-light mb-3">
-            <div class="card-header">
-                <strong>{{ answer.author.username }}</strong> 
-                ({{ answer.author.get_academic_rank_display|default:"Öğrenci" }})
-                - <small>{{ answer.created_at|date:"d M Y, H:i" }}</small>
+        <div class="card bg-light mb-3 shadow-sm border-0">
+            <div class="card-header d-flex justify-content-between">
+                <span>
+                    <strong>{{ answer.author.username }}</strong> 
+                    {% if answer.author.user_type == 'teacher' %}
+                        ({{ answer.author.get_academic_rank_display|default:"Öğretmen" }})
+                    {% else %}
+                        (Öğrenci) {% endif %}
+                </span>
+                <small class="text-muted">{{ answer.created_at|date:"d M Y, H:i" }}</small>
             </div>
             <div class="card-body">
                 <p class="card-text">{{ answer.content|linebreaks }}</p>
             </div>
         </div>
     {% empty %}
-        <p>Bu soruya henüz cevap yazılmamış.</p>
+        <div class="alert alert-info">
+            Bu soruya henüz cevap yazılmamış.
+        </div>
     {% endfor %}
 
-    <hr>
+    <hr class="my-4"> {% if user.user_type == 'teacher' %}
 
-    {% if user.user_type == 'teacher' %}
+        <div class="row g-4"> <div class="col-md-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">Soruya Cevap Yaz</h4>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ answer_form.content.label_tag }}
+                                {{ answer_form.content }}
+                            </div>
+                            <button type="submit" name="answer_submit" class="btn btn-primary">
+                                Cevabı Gönder
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div> <div class="col-md-5">
 
-        <h3>Soruya Cevap Yaz</h3>
-        <form method="POST">
-            {% csrf_token %}
-            {{ answer_form.as_p }}
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Soruyu Yönlendir</h5>
+                        <form method="POST">
+                            {% csrf_token %}
 
-            <button type="submit" name="answer_submit" class="btn btn-primary">
-                Cevabı Gönder
-            </button>
-        </form>
 
-        <hr>
+                            <!-- <div class="mb-3">
+                                {{ forward_form.recipient.label_tag }}
+                                
+                               
+        
+                                    <div class="dropdown">
+                                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Seciniz
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        {% for item in forward_form.recipient %}
+                                            <li><a class="dropdown-item" href="#">{{item}}</a></li>
+                                            
+                                        {% endfor %}
+                                    </ul>
+                                    </div>
+                                
+                            </div> -->
+                            
+                                    <form method="POST">
+                                        {% csrf_token %}
 
-        <h3>Soruyu Yönlendir</h3>
-        <form method="POST">
-            {% csrf_token %}
-            {{ forward_form.as_p }}
+                                        <div class="mb-3">
+                                            {{ forward_form.recipient.label_tag }}
+                                            {{ forward_form.recipient }} </div>
 
-            <button type="submit" name="forward_submit" class="btn btn-secondary">
-                Bu Hocaya Yönlendir (Forward)
-            </button>
-        </form>
+                                        <button type="submit" name="forward_submit" class="btn btn-secondary">
+                                            Bu Hocaya Yönlendir
+                                        </button>
+                                    </form>
 
-        <hr>
+                            <!--<div class="mb-3">
+                                {{ forward_form.recipient.label_tag }}
+                                
+                                
+                                {{ forward_form.recipient }}
+                            </div>-->
+                        </form>
+                    </div>
+                </div> <div class="card shadow-sm border-0">
+                     <div class="card-body">
+                         <h5 class="card-title mb-3">Soru Durumu</h5>
+                         {% if question.question_old_handler %}
+                             <div class="alert alert-warning small p-2">
+                                 Bu soru, 
+                                 <strong>{{ question.question_old_handler.username }}</strong> 
+                                 tarafından size yönlendirildi.
+                             </div>
+                         {% else %}
+                             <p class="text-muted small">
+                                 Bu soru size ilk defa atanmış (veya admin tarafından atanmış).
+                             </p>
+                         {% endif %}
+                     </div>
+                </div> </div> </div> {% endif %} <hr class="my-4">
 
-        <h3>Soru Durumu</h3>
-        {% if question.question_old_handler%}
-            <p>
-                Bu soru <strong>{{ question.question_old_handler.username }}</strong> 
-                tarafından size iletildi.
-            </p>
-        {% else %}
-            <p>
-                Bu soru ilk kez size atandı.
-            </p>
+    <div class="text-center">
+        {% if user.user_type == 'teacher' %}
+            <a href="{% url 'core:teacher_dashboard' %}" class="btn btn-outline-dark" style= "margin-bottom:20px;">
+                Listeye Geri Dön
+            </a>
+        {% elif user.user_type == 'student' or user.user_type == 'r_student' %}
+             <a href="{% url 'core:student_dashboard' %}" class="btn btn-outline-dark" style= "margin-bottom:20px;">
+                Paneline Geri Dön
+            </a>
         {% endif %}
-
-    {% endif %}
-
-    <br>
-
-    {% if user.user_type == 'teacher' %}
-        <a href="{% url 'core:teacher_dashboard' %}" class="btn btn-outline-dark">
-            Listeye Geri Dön
-        </a>
-    {% else %}
-        <a href="{% url 'core:student_dashboard' %}" class="btn btn btn-outline-dark">
-            Listeye Geri Dön
-        </a>
-    {% endif %}
+    </div>
 
 {% endblock %}

@@ -2,30 +2,65 @@
 
 {% block content %}
 
-    <h2>Öğretmen Paneli</h2>
-    <h3>Size Atanan Sorular</h3>
+    <h2 class="mb-3">Öğretmen Paneli</h2>
+    <h4 class="text-muted mb-4">Size Atanan Sorular</h4>
 
-    <hr> {% for question in questions %}
+    <div class="accordion" id="questionAccordion">
 
-        <div>
-            <h4>
-                <a href="{% url 'core:question_detail' question.pk %}">
-                    {{ question.title }}
-                </a>
-            </h4> 
+        {% for question in questions %}
+            <div class="accordion-item mb-2 shadow-sm border-0">
 
-            <p>
-                <strong>Gönderen:</strong> {{ question.author.username }}
-                <br>
-                <strong>Önem Sırası:</strong> {{ question.priority }}
-                <br>
-                <strong>Tarih:</strong> {{ question.created_at }}
-            </p>
-        </div>
-        <hr> {% empty %}
-        <p>Size atanmış aktif bir soru bulunmamaktadır.</p>
+                <h2 class="accordion-header" id="heading-{{ question.pk }}">
+                    <button class="accordion-button collapsed" type="button" 
+                            data-bs-toggle="collapse" data-bs-target="#collapse-{{ question.pk }}" aria-expanded="false" 
+                            aria-controls="collapse-{{ question.pk }}">
 
-    {% endfor %} <br>
-    <a href="{% url 'core:home' %}">Anasayfaya Dön</a>
+                        <div class="d-flex justify-content-between w-100 pe-3">
+                            <span>
+                                <strong>{{ question.title }}</strong>
+                                <small class="text-muted ms-2">
+                                    (Gönderen: {{ question.question_author.username }})
+                                </small>
+                            </span>
+                            <span class="badge bg-danger rounded-pill">
+                                Önem: {{ question.question_priority }}
+                            </span>
+                        </div>
+                    </button>
+                </h2>
 
+                <div id="collapse-{{ question.pk }}" 
+                     class="accordion-collapse collapse" 
+                     aria-labelledby="heading-{{ question.pk }}"
+                     data-bs-parent="#questionAccordion">
+
+                    <div class="accordion-body">
+
+                        <p>
+                            <strong>Tarih:</strong> 
+                            {{ question.created_at|date:"d M Y, H:i" }}
+                        </p>
+                        <hr>
+
+                        <p>
+                            <strong>Sınıf:</strong> 
+                            {{ question.class_term.class_name|default:"Belirtilmemiş" }}
+                            <br>
+                            <strong>Ders:</strong> 
+                            {{ question.course.title|default:"Belirtilmemiş" }}
+                        </p>
+
+                        <a href="{% url 'core:question_detail' question.pk %}" 
+                           class="btn btn-primary btn-sm">
+                            Soruyu Görüntüle & Cevapla
+                        </a>
+                    </div>
+                </div>
+            </div> {% empty %}
+            <div class="alert alert-info">
+                Size atanmış aktif bir soru bulunmamaktadır.
+            </div>
+        {% endfor %}
+
+    </div> 
 {% endblock %}

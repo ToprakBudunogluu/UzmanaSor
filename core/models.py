@@ -9,11 +9,20 @@ class CourseTest(models.Model):
         blank=True           # Veritabanında bu alanın boş olmasına izin ver.
     )
     course_code = models.CharField(max_length=20,  verbose_name="Ders Kodu", null=True, blank=True)
-    title = models.CharField(max_length=200, verbose_name="Ders Basligi")
+    title = models.CharField(max_length=200, verbose_name="Ders Basligi", null=True, blank=True)
     description = models.TextField(verbose_name="Ders Aciklamasi", null=True, blank=True, )
     
     def __str__(self):
-        return f"{self.title} - {self.course_teacher.username}"
+        try:
+            if self.title != None: 
+                return f"{self.title} - {self.course_teacher.username}"
+            else:
+                return f"{self.course_teacher.username}"
+        except AttributeError:
+            #return f"{self.title} - Ogretmen Atanmamis"
+            
+            return "none"
+            
 
 class ClassTermTest(models.Model):
 
@@ -36,7 +45,7 @@ class QuestionBinderTest(models.Model):
     question_old_handler= models.ForeignKey(settings.AUTH_USER_MODEL , related_name= 'Sorunun_Eski_Sorumlusu' , verbose_name='Sorunun Eski Sorumlusu', null=True, blank=True, on_delete=models.SET_NULL)
     question_priority = models.IntegerField(verbose_name='Onem Sirasi' , editable=False)
     class_term = models.ForeignKey(ClassTermTest , verbose_name="Bolum ve Donem" , on_delete=models.CASCADE)
-    course = models.ForeignKey(CourseTest , verbose_name="Ana Ders", on_delete=models.CASCADE)
+    course = models.ForeignKey(CourseTest , verbose_name="Ana Ders & Yönetim", on_delete=models.CASCADE)
 
     
     def save(self, *args, **kwargs):
@@ -53,6 +62,9 @@ class QuestionBinderTest(models.Model):
             self.question_priority = 1
 
         super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Soru: {self.title} - {self.question_author.username}"
 
 
 # MODEL 4: CEVAP (Hiçbir değişiklik yok, zaten Soru'ya bağlıydı)
